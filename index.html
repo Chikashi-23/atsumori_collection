@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>あつもり</title>
+<meta name="apple-mobile-web-app-title" content="あつもり">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FFFDF7">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<script>
+  // ▼ GASをデプロイしたときに表示される「ウェブアプリのURL」（/exec で終わるもの）を貼り付け
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzUYBIgwzINvilgYDMN6POiqUL8USK8NsImTyCBcHFZOnv8rnFUZzMb-njwZ4KpsbI2/exec';
+</script>
+<style>
+:root{
+  --bg:#F4EFE1; --card:#FFFDF7; --ink:#3B3A33; --muted:#8A8573; --line:#E3DCC8;
+  --leaf:#4C9A5F; --leaf-deep:#2F7A45; --accent:#4C9A5F;
+  --font:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;background:#F4EFE1}
+body{margin:0;background:transparent;color:var(--ink);font:500 15px/1.55 var(--font);padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+button,input{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* 背景の森：iPhone でも固定表示されるよう専用レイヤーに敷く */
+.bg{position:fixed;inset:0;z-index:-1;background:#F4EFE1 url(bg.jpg) center top/cover no-repeat;pointer-events:none}
+
+/* ---- ヘッダー ---- */
+header{position:sticky;top:0;z-index:5;background:rgba(255,253,247,.86);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.wrap{max-width:760px;margin:0 auto;padding:0 14px}
+header .wrap{padding-top:calc(12px + env(safe-area-inset-top));padding-bottom:10px}
+.top{display:flex;align-items:center;gap:8px}
+h1{margin:0;font:900 21px/1.2 var(--font);letter-spacing:.04em}
+.total{font-size:12px;color:var(--muted);margin-left:2px}
+.saving{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+.icon-btn{border:1px solid var(--line);background:var(--card);border-radius:999px;width:34px;height:34px;display:grid;place-items:center;color:var(--muted);flex:none}
+
+/* タブ（大分類）：丸い見出しラベルを横に並べ、それぞれに進捗を出す */
+.tabs{display:flex;gap:6px;overflow-x:auto;margin:12px -14px 0;padding:2px 14px 4px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:6px 12px 7px;text-align:left;min-width:84px}
+.tab b{display:block;font-weight:700;font-size:14px}
+.tab small{display:block;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tab .mini{display:block;height:3px;border-radius:2px;background:var(--line);margin-top:4px;overflow:hidden}
+.tab .mini i{display:block;height:100%;background:var(--c)}
+.tab[aria-selected="true"]{border-color:var(--c);background:var(--c);color:#fff}
+.tab[aria-selected="true"] small{color:rgba(255,255,255,.85)}
+.tab[aria-selected="true"] .mini{background:rgba(255,255,255,.35)}
+.tab[aria-selected="true"] .mini i{background:#fff}
+.tab.done b::after{content:"★";margin-left:4px;font-size:11px}
+
+/* 進捗 */
+.progress{display:flex;align-items:center;gap:10px;margin-top:10px}
+.bar{flex:1;height:10px;border-radius:999px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:999px;background:var(--accent);transition:width .3s ease}
+.pct{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pct span{color:var(--muted);font-weight:500}
+
+/* タイプ（小分類） */
+.types{display:flex;gap:6px;overflow-x:auto;margin:10px -14px 0;padding:0 14px;scrollbar-width:none}
+.types::-webkit-scrollbar{display:none}
+.types:empty{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:13px}
+.chip .n{margin-left:5px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);font-weight:700}
+
+.tools{display:flex;gap:8px;margin-top:10px}
+.search{flex:1;min-width:0;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);font-size:16px}
+.toggle{flex:none;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:0 12px;font-size:13px;white-space:nowrap}
+.toggle[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+
+/* ---- 一覧 ---- */
+main{padding-top:6px}
+.group{margin-top:14px}
+.group h2{display:inline-flex;align-items:baseline;gap:8px;margin:0 2px 6px;padding:3px 12px;border-radius:999px;background:rgba(255,253,247,.92);font-size:14px;font-weight:700;color:var(--accent)}
+.group h2 span{font-size:12px;color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
+.list{list-style:none;margin:0;padding:0;background:rgba(255,253,247,.95);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.item{display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left}
+.list li:last-child .item{border-bottom:0}
+.check{flex:none;width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;background:var(--card);transition:background .15s,border-color .15s}
+.check svg{width:16px;height:16px;opacity:0;transition:opacity .15s}
+.item.got .check{background:var(--accent);border-color:var(--accent)}
+.item.got .check svg{opacity:1}
+.item.got .name{color:var(--muted)}
+.body{flex:1;min-width:0}
+.name{display:block;font-weight:700;font-size:15px;overflow-wrap:anywhere}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:2px;font-size:12px;color:var(--muted)}
+.swatch{display:inline-flex;align-items:center;gap:4px}
+.swatch i{width:11px;height:11px;border-radius:50%;border:1px solid rgba(0,0,0,.15);display:inline-block}
+.tag{border:1px solid var(--line);border-radius:6px;padding:0 6px;font-size:11px}
+.empty{margin-top:16px;padding:32px 14px;text-align:center;color:var(--muted);background:rgba(255,253,247,.92);border-radius:14px}
+.empty button{margin-top:10px}
+.reload{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 12px;font-size:13px}
+
+/* ---- ダイアログ・トースト ---- */
+.overlay{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(40,38,30,.4)}
+.overlay.open{display:flex}
+.card{width:100%;max-width:380px;background:var(--card);border-radius:16px;padding:18px 16px 14px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.card h2{margin:0;font-size:17px}
+.card p{margin:8px 0 12px;font-size:13px;color:var(--muted)}
+.card input{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:16px;margin-bottom:10px}
+.card .err{color:#C2503F;font-size:13px;margin:-2px 0 10px}
+.card .btns{display:flex;justify-content:flex-end}
+.card .ok{border:0;background:var(--leaf);color:#fff;border-radius:10px;padding:8px 18px;font-weight:700}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;max-width:92vw;padding:10px 14px;border-radius:10px;background:var(--ink);color:#fff;font-size:14px;display:none}
+.toast.show{display:block}
+@media (prefers-reduced-motion:reduce){.bar i,.check,.check svg{transition:none}}
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true"></div>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <h1>あつもり</h1>
+      <span class="total" id="total"></span>
+      <span class="saving" id="saving" aria-live="polite"></span>
+      <button class="icon-btn" id="reload" type="button" aria-label="再読み込み">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg>
+      </button>
+      <button class="icon-btn" id="key" type="button" aria-label="合言葉の設定">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3"/></svg>
+      </button>
+    </div>
+    <div class="tabs" id="tabs" role="tablist" aria-label="大分類"></div>
+    <div class="progress" aria-live="polite">
+      <div class="bar"><i id="barFill" style="width:0"></i></div>
+      <div class="pct" id="pct"></div>
+    </div>
+    <div class="types" id="types" role="group" aria-label="小分類"></div>
+    <div class="tools">
+      <input class="search" id="q" type="search" placeholder="名前で探す" autocomplete="off">
+      <button class="toggle" id="onlyMissing" type="button" aria-pressed="false">未取得だけ</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap" id="main"><p class="empty">読み込み中…</p></main>
+
+<div class="overlay" id="tokenBox"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const toHira = s => s.replace(/[\u30a1-\u30f6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
+
+/* ---- 表示の設定 ---- */
+// タブごとの色（ここにないタブは下の予備色を順に使う）
+const TAB_COLORS = { '生き物': '#4C9A5F', '発掘': '#A4703F', '美術品': '#8A65B5', '植物': '#D46A92', '曲': '#3F82C4', 'レシピ': '#DD8433' };
+const SPARE_COLORS = ['#2E9C9A', '#B5534A', '#6B7FBF', '#9A8A2E'];
+// 色名 → 見本の色
+const SWATCH = {
+  'きいろ': '#F2C94C', 'みどり': '#6FBF73', 'しろ': '#FAFAF5', 'オレンジ': '#F2994A', 'あか': '#E05A4F', 'ピンク': '#F4A6C0',
+  'くろ': '#3A3A3A', 'むらさき': '#9B7BC8', 'あお': '#5B8DD6', 'きん': '#D4AF37', 'あかきいろ': 'linear-gradient(135deg,#E05A4F 50%,#F2C94C 50%)',
+  'レッド': '#E05A4F', 'イエロー': '#F2C94C', 'グリーン': '#6FBF73', 'ブルー': '#5B8DD6', 'パープル': '#9B7BC8', 'ホワイト': '#FAFAF5',
+  'グレー': '#A0A0A0', 'キャメル': '#C19A6B', 'ブラウン': '#8B5E3C', 'ブラック': '#3A3A3A', 'シルバー': '#C9CCD1'
+};
+
+/* ---- 状態 ---- */
+const S = { items: [], tabs: [], byRow: {} };
+const pref = load_pref();
+let tab = pref.tab || '';
+let type = '';            // '' = すべて
+let onlyMissing = !!pref.onlyMissing;
+
+function load_pref() { try { return JSON.parse(localStorage.getItem('atsumori_pref') || '{}'); } catch (e) { return {}; } }
+function save_pref() { try { localStorage.setItem('atsumori_pref', JSON.stringify({ tab, onlyMissing })); } catch (e) {} }
+
+/* ---- 合言葉・API ---- */
+const TOKEN_KEY = 'atsumori_token';
+function getToken() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
+function setToken(t) { try { localStorage.setItem(TOKEN_KEY, t); } catch (e) {} }
+class AuthError extends Error {}
+
+async function call(fn, ...args) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ token: getToken(), fn, args })
+  });
+  const d = await res.json();
+  if (!d.ok) {
+    if (d.error === 'unauthorized') throw new AuthError('合言葉が違います');
+    throw new Error(d.message || d.error);
+  }
+  return d.data;
+}
+
+function askToken(message) {
+  return new Promise(resolve => {
+    const box = $('#tokenBox');
+    box.innerHTML = `<div class="card" role="dialog" aria-modal="true" aria-labelledby="tk-t">
+      <h2 id="tk-t">合言葉を入力</h2>
+      <p>GASで作成した合言葉を入力してください。この端末のブラウザにだけ保存されます。</p>
+      <input id="tk-in" type="password" autocomplete="off" aria-label="合言葉">
+      ${message ? `<div class="err">${esc(message)}</div>` : ''}
+      <div class="btns"><button class="ok" id="tk-ok" type="button">保存</button></div></div>`;
+    box.classList.add('open');
+    const input = $('#tk-in'); input.focus();
+    const done = () => {
+      const t = input.value.trim(); if (!t) return;
+      setToken(t); box.classList.remove('open'); resolve();
+    };
+    $('#tk-ok').onclick = done;
+    input.onkeydown = e => { if (e.key === 'Enter') done(); };
+  });
+}
+
+/* ---- 読み込み ---- */
+async function load() {
+  if (!getToken()) await askToken();
+  try {
+    const d = await call('getData');
+    S.items = d.items; S.tabs = d.tabs;
+    S.byRow = {}; S.items.forEach(it => S.byRow[it.row] = it);
+    if (!S.tabs.some(t => t.name === tab)) tab = S.tabs.length ? S.tabs[0].name : '';
+    const t = S.tabs.find(t => t.name === tab);
+    if (!t || !t.types.includes(type)) type = '';
+    render();
+  } catch (e) {
+    if (e instanceof AuthError) { await askToken('合言葉が違います。もう一度入力してください。'); return load(); }
+    $('#main').innerHTML = `<p class="empty">読み込めませんでした：${esc(e.message || e)}<br><button class="reload" type="button" onclick="load()">もう一度読み込む</button></p>`;
+  }
+}
+
+/* ---- 描画 ---- */
+function colorOf(name) {
+  if (TAB_COLORS[name]) return TAB_COLORS[name];
+  const i = S.tabs.findIndex(t => t.name === name);
+  return SPARE_COLORS[Math.max(0, i) % SPARE_COLORS.length];
+}
+const count = list => ({ got: list.filter(it => it.got).length, all: list.length });
+
+function render() {
+  const accent = colorOf(tab);
+  document.documentElement.style.setProperty('--accent', accent);
+
+  // 全体
+  const all = count(S.items);
+  $('#total').textContent = `${all.got} / ${all.all}`;
+
+  // タブ（大分類）
+  $('#tabs').innerHTML = S.tabs.map(t => {
+    const c = count(S.items.filter(it => it.tab === t.name));
+    const pct = c.all ? Math.round(c.got / c.all * 100) : 0;
+    return `<button class="tab${c.got === c.all && c.all ? ' done' : ''}" role="tab" type="button" data-tab="${esc(t.name)}"
+      aria-selected="${t.name === tab}" style="--c:${colorOf(t.name)}">
+      <b>${esc(t.name)}</b><small>${c.got} / ${c.all}</small><span class="mini"><i style="width:${pct}%"></i></span></button>`;
+  }).join('');
+
+  // タイプ（小分類）：タイプが2つ以上あるタブだけ表示
+  const tabItems = S.items.filter(it => it.tab === tab);
+  const types = (S.tabs.find(t => t.name === tab) || { types: [] }).types;
+  $('#types').innerHTML = types.length < 2 ? '' :
+    [['', 'すべて', count(tabItems)]].concat(types.map(ty => [ty, ty, count(tabItems.filter(it => it.type === ty))]))
+      .map(([v, l, c]) => `<button class="chip" type="button" data-type="${esc(v)}" aria-pressed="${v === type}">${esc(l)}<span class="n">${c.got}/${c.all}</span></button>`).join('');
+
+  // 進捗（選んでいる範囲）
+  const scope = type ? tabItems.filter(it => it.type === type) : tabItems;
+  const sc = count(scope);
+  const pct = sc.all ? Math.round(sc.got / sc.all * 100) : 0;
+  $('#barFill').style.width = pct + '%';
+  $('#pct').innerHTML = `${sc.got} / ${sc.all} <span>${pct}%</span>`;
+  $('#onlyMissing').setAttribute('aria-pressed', onlyMissing);
+
+  renderList(scope, types);
+}
+
+function renderList(scope, types) {
+  const q = toHira($('#q').value.trim());
+  const visible = scope.filter(it => (!onlyMissing || !it.got) && (!q || toHira(it.name).includes(q)));
+  if (!visible.length) {
+    $('#main').innerHTML = `<p class="empty">${onlyMissing && !q && scope.length ? 'すべて取得済みです！' : '該当するアイテムはありません。'}</p>`;
+    return;
+  }
+  // 「すべて」のときはタイプごとに見出しを付けて並べる
+  const groups = (!type && types.length >= 2)
+    ? types.map(ty => [ty, visible.filter(it => it.type === ty), scope.filter(it => it.type === ty)]).filter(g => g[1].length)
+    : [['', visible, scope]];
+  $('#main').innerHTML = groups.map(([ty, list, whole]) => {
+    const c = count(whole);
+    return `<section class="group">${ty ? `<h2>${esc(ty)}<span>${c.got} / ${c.all}</span></h2>` : ''}
+      <ul class="list">${list.map(itemHTML).join('')}</ul></section>`;
+  }).join('');
+}
+
+function itemHTML(it) {
+  const meta = [];
+  if (it.color) {
+    const sw = SWATCH[it.color] || '#DDD';
+    meta.push(`<span class="swatch"><i style="background:${sw}"></i>${esc(it.color)}</span>`);
+  }
+  if (it.mood) meta.push(`<span class="tag">${esc(it.mood)}</span>`);
+  if (!type && it.type && (S.tabs.find(t => t.name === tab) || { types: [] }).types.length < 2) meta.push(esc(it.type));
+  return `<li><button class="item${it.got ? ' got' : ''}" type="button" data-row="${it.row}" aria-pressed="${it.got}">
+    <span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+    <span class="body"><span class="name">${esc(it.name)}</span>${meta.length ? `<span class="meta">${meta.join('')}</span>` : ''}</span>
+  </button></li>`;
+}
+
+/* ---- 保存（同じアイテムへの連続操作は順番に送る） ---- */
+const chain = {}; let pending = 0, savedTimer;
+function showSaving() {
+  clearTimeout(savedTimer);
+  $('#saving').textContent = pending ? '保存中…' : '保存済み';
+  if (!pending) savedTimer = setTimeout(() => $('#saving').textContent = '', 1500);
+}
+function toggle(it) {
+  it.got = !it.got;
+  render();
+  const value = it.got;
+  pending++; showSaving();
+  chain[it.row] = (chain[it.row] || Promise.resolve())
+    .then(() => call('setGot', it.row, it.name, value))
+    .catch(e => { toast('保存できませんでした：' + (e.message || e)); load(); })
+    .finally(() => { pending--; showSaving(); });
+}
+
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+/* ---- イベント ---- */
+$('#tabs').addEventListener('click', e => {
+  const b = e.target.closest('[data-tab]'); if (!b) return;
+  tab = b.dataset.tab; type = ''; save_pref(); render();
+  window.scrollTo({ top: 0 });
+});
+$('#types').addEventListener('click', e => {
+  const b = e.target.closest('[data-type]'); if (!b) return;
+  type = b.dataset.type; render();
+});
+$('#main').addEventListener('click', e => {
+  const b = e.target.closest('[data-row]'); if (!b) return;
+  toggle(S.byRow[b.dataset.row]);
+});
+$('#onlyMissing').addEventListener('click', () => { onlyMissing = !onlyMissing; save_pref(); render(); });
+let qTimer; $('#q').addEventListener('input', () => { clearTimeout(qTimer); qTimer = setTimeout(render, 150); });
+$('#reload').addEventListener('click', load);
+$('#key').addEventListener('click', async () => { await askToken(); load(); });
+
+load();
+</script>
+</body>
+</html>
