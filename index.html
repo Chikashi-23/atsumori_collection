@@ -24,7 +24,7 @@
   --font:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;
 }
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%;background:#F4EFE1}
+html{-webkit-text-size-adjust:100%;background:#F4EFE1;min-height:calc(100% + env(safe-area-inset-top,0px))}
 body{margin:0;background:transparent;color:var(--ink);font:500 15px/1.55 var(--font);padding-bottom:calc(24px + env(safe-area-inset-bottom))}
 button,input{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 button{cursor:pointer}
