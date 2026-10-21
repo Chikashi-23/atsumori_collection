@@ -9,7 +9,7 @@
 <link rel="icon" type="image/png" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#FBF8EE">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
@@ -32,7 +32,7 @@ button{cursor:pointer}
 
 /* 背景の森：iPhone でも固定表示されるよう専用レイヤーに敷く
    ホーム画面から開いたときにホームバーの手前で切れないよう、下端より少し長くしておく */
-.bg{position:fixed;top:0;left:0;right:0;bottom:-120px;z-index:-1;background:#F4EFE1 url(bg.jpg) center top/cover no-repeat;pointer-events:none}
+.bg{position:fixed;top:0;left:0;right:0;height:100vh;height:100lvh;z-index:-1;background:#F4EFE1 url(bg.jpg) center top/cover no-repeat;pointer-events:none}
 @media (orientation: portrait){.bg{background-image:url(bg-sp.jpg)}}
   
 /* ---- ヘッダー ---- */
